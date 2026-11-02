@@ -41,7 +41,7 @@ async function refreshBoard() {
       actions.push(`<button data-act="sync" data-id="${inv.id}">Check status</button>`);
       actions.push(`<button data-act="mark-paid" data-id="${inv.id}">Mark paid</button>`);
     }
-    if (inv.payer_view_url) {
+    if (inv.payer_view_url && inv.derived_status !== 'DRAFT') {
       actions.push(`<a href="${inv.payer_view_url}" target="_blank" rel="noopener">Payer link</a>`);
     }
     return `<div class="card">
