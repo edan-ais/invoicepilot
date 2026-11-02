@@ -28,6 +28,7 @@ const env = {
   PAYPAL_CLIENT_SECRET: process.env.PAYPAL_CLIENT_SECRET,
   GEMINI_API_KEY: process.env.GEMINI_API_KEY,
   SELLER_EMAIL: process.env.SELLER_EMAIL,
+  DEMO_TOKEN: process.env.DEMO_TOKEN,
   ASSETS: {
     async fetch(request) {
       const url = new URL(request.url);

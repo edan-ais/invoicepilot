@@ -67,6 +67,14 @@ free Cloudflare account.
 `PAYPAL_MODE` in `wrangler.toml` selects `sandbox` (real PayPal sandbox API) or
 `mock` (offline development). The hosted demo runs in `sandbox` mode.
 
+## Demo access
+
+The hosted demo is private by default. When the `DEMO_TOKEN` secret is set,
+every page and API route requires it; visitors see an access page and entering
+the token sets a cookie. Hackathon judges receive the token through the
+submission's testing instructions (per the rules' private-site provision).
+Local development leaves `DEMO_TOKEN` unset, which keeps the app open.
+
 ## Judging notes
 
 - The demo video (linked on the Devpost entry) shows the full loop: chat ->
