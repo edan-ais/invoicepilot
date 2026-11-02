@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>InvoicePilot - AI invoicing on PayPal</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">
+    <span class="logo">IP</span>
+    <div>
+      <h1>InvoicePilot</h1>
+      <p>Chat your way to paid &middot; AI invoicing on PayPal</p>
+    </div>
+  </div>
+  <div id="mode-pill" class="pill">loading</div>
+</header>
+
+<main class="layout">
+  <section class="chat-panel">
+    <div id="chat-log" class="chat-log"></div>
+    <form id="chat-form" class="chat-form">
+      <input id="chat-input" type="text" autocomplete="off"
+        placeholder='Try "Invoice Blue Bottle for 2 cakes at $45 each"'>
+      <button type="submit">Send</button>
+    </form>
+    <div class="quick-actions">
+      <button class="chip" data-msg="Who owes me money?">Who owes me?</button>
+      <button class="chip" data-msg="Invoice Blue Bottle for 2 cakes at $45 each">Sample invoice</button>
+      <button class="chip" data-msg="Send it">Send latest draft</button>
+    </div>
+  </section>
+
+  <section class="board-panel">
+    <div class="board-head">
+      <h2>Invoices</h2>
+      <div id="outstanding" class="outstanding"></div>
+    </div>
+    <div id="invoice-list" class="invoice-list"></div>
+  </section>
+</main>
+
+<script src="/app.js" type="module"></script>
+</body>
+</html>

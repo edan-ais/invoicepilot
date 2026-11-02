@@ -1,0 +1,17 @@
+name = "invoicepilot"
+main = "src/worker.js"
+compatibility_date = "2026-10-15"
+
+[assets]
+directory = "./public"
+binding = "ASSETS"
+
+# KV namespace ids are filled in after `wrangler kv namespace create INVOICES`
+[[kv_namespaces]]
+binding = "INVOICES"
+id = "PLACEHOLDER_KV_ID"
+preview_id = "PLACEHOLDER_KV_PREVIEW_ID"
+
+[vars]
+PAYPAL_MODE = "sandbox"
+# Secrets (set with `wrangler secret put`): PAYPAL_CLIENT_ID, PAYPAL_CLIENT_SECRET, GEMINI_API_KEY

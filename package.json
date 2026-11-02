@@ -1,0 +1,15 @@
+{
+  "name": "invoicepilot",
+  "version": "0.1.0",
+  "private": true,
+  "description": "InvoicePilot - AI invoice assistant built on the PayPal developer platform",
+  "type": "module",
+  "scripts": {
+    "dev": "node test/local-server.mjs",
+    "deploy": "wrangler deploy",
+    "test": "node test/run-tests.mjs"
+  },
+  "devDependencies": {
+    "wrangler": "^3.99.0"
+  }
+}
