@@ -117,6 +117,15 @@ export async function handleChat(request, env) {
         });
       }
 
+      case 'mark_paid': {
+        const invoice = await findInvoice(kv, intent.invoice_ref);
+        if (!invoice) return Response.json({ reply: 'Which invoice was paid? Give me the number or the customer name.' });
+        invoice.status = 'PAID';
+        invoice.paid_at = new Date().toISOString();
+        await saveInvoice(kv, invoice);
+        return Response.json({ reply: `Marked ${describeInvoice({ ...invoice, status: 'PAID' })} - that is ${money(invoice.total)} collected.`, invoice });
+      }
+
       case 'invoice_status': {
         const invoice = await findInvoice(kv, intent.invoice_ref);
         if (!invoice) return Response.json({ reply: 'I could not find that invoice - try the invoice number or the customer name.' });

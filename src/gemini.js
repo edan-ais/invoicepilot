@@ -9,7 +9,7 @@ Turn the user's message into ONE JSON object. No markdown, no prose, JSON only.
 
 Schema:
 {
-  "action": "create_invoice" | "send_invoice" | "list_outstanding" | "invoice_status" | "chat",
+  "action": "create_invoice" | "send_invoice" | "list_outstanding" | "invoice_status" | "mark_paid" | "chat",
   "recipient_name": string | null,        // who is being billed, for create_invoice
   "recipient_email": string | null,       // only if the user gave it, never invent one
   "items": [ { "name": string, "quantity": number, "unit_price": number } ] | null,
@@ -25,6 +25,7 @@ Rules:
 - Prices are USD unless the user says otherwise. Quantity defaults to 1.
 - list_outstanding covers questions like "who owes me", "what is unpaid", "total outstanding".
 - invoice_status covers asking about one specific invoice or customer.
+- mark_paid covers "X paid me" / "mark the Y invoice as paid".
 - Never invent recipients, amounts, or email addresses.`;
 
 function fallbackParse(message) {
@@ -32,6 +33,8 @@ function fallbackParse(message) {
   if (/who owes|outstanding|unpaid|owed/.test(lower)) {
     return { action: 'list_outstanding', reply: 'Here is what is still outstanding.' };
   }
+  const paidMatch = message.match(/([A-Za-z][\w .''-]{1,40}?)\s+(?:paid|has paid)\b/i);
+  if (paidMatch) return { action: 'mark_paid', invoice_ref: paidMatch[1].trim(), reply: 'Marking it paid.' };
   if (/^(send|resend)\b/.test(lower)) {
     return { action: 'send_invoice', invoice_ref: null, reply: 'Sending the latest draft.' };
   }
