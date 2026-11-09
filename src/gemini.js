@@ -2,7 +2,7 @@
 // intent. Falls back to a small deterministic parser when no API key is set so
 // the app still responds coherently (and local development stays free).
 
-const MODEL = 'gemini-2.0-flash';
+const MODEL = 'gemini-3.8-flash';
 
 const SYSTEM = `You are the parsing engine inside InvoicePilot, an AI invoice assistant built on PayPal.
 Turn the user's message into ONE JSON object. No markdown, no prose, JSON only.
