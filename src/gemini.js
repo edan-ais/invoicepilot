@@ -73,35 +73,76 @@ function offlineFallback(message) {
   return parsed;
 }
 
+// Reads a Gemini SSE stream and concatenates the text chunks.
+async function readStreamedText(body) {
+  const reader = body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = '';
+  let text = '';
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+    const lines = buffer.split('\n');
+    buffer = lines.pop();
+    for (const line of lines) {
+      const t = line.trim();
+      if (!t.startsWith('data:')) continue;
+      const payload = t.slice(5).trim();
+      if (!payload || payload === '[DONE]') continue;
+      try {
+        const chunk = JSON.parse(payload);
+        const parts = chunk.candidates?.[0]?.content?.parts || [];
+        for (const p of parts) if (p.text) text += p.text;
+      } catch {
+        // incomplete JSON line; ignored
+      }
+    }
+  }
+  return text;
+}
+
 export async function parseMessage(env, message, contextSummary) {
   if (!env.GEMINI_API_KEY) return offlineFallback(message);
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${env.GEMINI_API_KEY}`;
+  // Streaming (SSE): a non-streaming call is byte-silent while the model
+  // generates, and an edge proxy read timeout can cut a silent connection
+  // before the response arrives. Chunks keep the connection alive. The
+  // overall timeout keeps a stalled connection from hanging the chat.
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:streamGenerateContent?alt=sse&key=${env.GEMINI_API_KEY}`;
   const prompt = contextSummary
     ? `Current invoice ledger summary: ${contextSummary}\n\nUser message: ${message}`
     : `User message: ${message}`;
-  const res = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      systemInstruction: { parts: [{ text: SYSTEM }] },
-      contents: [{ role: 'user', parts: [{ text: prompt }] }],
-      generationConfig: { responseMimeType: 'application/json', temperature: 0.1 },
-    }),
-  });
-  const body = await res.json().catch(() => ({}));
-  if (!res.ok) {
-    console.error('Gemini error', res.status, JSON.stringify(body).slice(0, 300));
-    return offlineFallback(message);
-  }
-  const text = body.candidates?.[0]?.content?.parts?.[0]?.text;
-  if (!text) return offlineFallback(message);
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 60000);
   try {
-    const parsed = JSON.parse(text);
-    if (!parsed.action) return offlineFallback(message);
-    return parsed;
-  } catch {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        systemInstruction: { parts: [{ text: SYSTEM }] },
+        contents: [{ role: 'user', parts: [{ text: prompt }] }],
+        generationConfig: { responseMimeType: 'application/json', temperature: 0.1 },
+      }),
+      signal: controller.signal,
+    });
+    if (!res.ok || !res.body) {
+      const errBody = await res.text().catch(() => '');
+      console.error('Gemini error', res.status, errBody.slice(0, 300));
+      return offlineFallback(message);
+    }
+    const text = await readStreamedText(res.body);
+    if (!text) return offlineFallback(message);
+    try {
+      const parsed = JSON.parse(text);
+      if (!parsed.action) return offlineFallback(message);
+      return parsed;
+    } catch {
+      return offlineFallback(message);
+    }
+  } catch (err) {
+    console.error('Gemini fetch failed', String(err).slice(0, 200));
     return offlineFallback(message);
+  } finally {
+    clearTimeout(timer);
   }
 }
-
-
