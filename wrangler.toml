@@ -9,8 +9,8 @@ binding = "ASSETS"
 # KV namespace ids are filled in after `wrangler kv namespace create INVOICES`
 [[kv_namespaces]]
 binding = "INVOICES"
-id = "PLACEHOLDER_KV_ID"
-preview_id = "PLACEHOLDER_KV_PREVIEW_ID"
+id = "2aafba4d1ae246a48524cf376ad767da"
+preview_id = "974ddd76410a462e9787b91f08bf6f38"
 
 [vars]
 PAYPAL_MODE = "sandbox"
