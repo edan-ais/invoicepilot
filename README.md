@@ -18,10 +18,11 @@ Built for the PayPal AI Hackathon.
   against the free sandbox environment. No payment data ever lives in the app;
   PayPal is the system of record for every invoice lifecycle event.
 - **Gemini is the AI layer.** Chat messages are parsed by
-  `gemini-2.0-flash` (Google AI Studio) into structured invoice intents
+  `gemini-3.5-flash-lite` (Google AI Studio) into structured invoice intents
   (create, send, list outstanding, check status) with a strict JSON schema.
-  A deterministic fallback parser keeps the app responsive if the model is
-  unreachable.
+  Streaming responses and a 60-second timeout bound the AI request. A
+  deterministic fallback parser handles supported requests when the model is
+  unavailable; fallback replies are visibly labeled as offline mode.
 - **Cloudflare Workers host it.** The API and static app run as one Worker;
   invoices are cached in Workers KV so the dashboard is instant while PayPal
   stays the source of truth (status is re-synced from PayPal on demand).
@@ -77,11 +78,16 @@ Local development leaves `DEMO_TOKEN` unset, which keeps the app open.
 
 ## Judging notes
 
-- The demo video (linked on the Devpost entry) shows the full loop: chat ->
-  Gemini parse -> PayPal sandbox invoice created and sent -> status sync ->
-  "who owes me" answer with live totals.
-- Sandbox test credentials and setup steps above let judges run the project
-  end-to-end free of charge.
+- The verified hosted demonstration covers chat -> Gemini parse -> PayPal
+  sandbox draft creation, including the requested amount and due date.
+- Send, status-sync, and mark-paid controls are implemented. Invoice delivery,
+  payment, status-sync correctness, and mark-paid are not demonstrated in the
+  current review video. No real payment is made by this demo.
+- AI availability can vary. A successful AI parse is distinct from the visibly
+  labeled offline fallback; neither should be treated as a completed payment.
+- Judges can use the hosted demo with the access token supplied privately in
+  the testing instructions, or configure their own sandbox and AI credentials
+  using the setup steps above. Do not commit credentials to the repository.
 
 ## License
 
