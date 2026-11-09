@@ -30,6 +30,8 @@ Rules:
 
 function fallbackParse(message) {
   const lower = message.toLowerCase();
+  const dueMatch = lower.match(/due\s+in\s+(\d+)\s+days?/);
+  const dueDays = dueMatch ? Math.min(Math.max(Number(dueMatch[1]), 1), 365) : 14;
   if (/who owes|outstanding|unpaid|owed/.test(lower)) {
     return { action: 'list_outstanding', reply: 'Here is what is still outstanding.' };
   }
@@ -55,7 +57,7 @@ function fallbackParse(message) {
       recipient_name: recipientMatch[1].trim(),
       recipient_email: null,
       items: [item],
-      due_days: 14,
+      due_days: dueDays,
       note: null,
       reply: `Draft invoice for ${recipientMatch[1].trim()} - ${item.quantity} x ${item.name} at $${item.unit_price}. Say "send it" to send.`,
     };
@@ -63,8 +65,16 @@ function fallbackParse(message) {
   return { action: 'chat', reply: 'Tell me who to bill and for what, e.g. "Invoice Blue Bottle for 2 cakes at $45 each".' };
 }
 
+// Marks a fallback reply so users can tell the deterministic offline
+// parser answered instead of Gemini.
+function offlineFallback(message) {
+  const parsed = fallbackParse(message);
+  parsed.reply = `[Offline mode - AI parser unavailable] ${parsed.reply}`;
+  return parsed;
+}
+
 export async function parseMessage(env, message, contextSummary) {
-  if (!env.GEMINI_API_KEY) return fallbackParse(message);
+  if (!env.GEMINI_API_KEY) return offlineFallback(message);
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${env.GEMINI_API_KEY}`;
   const prompt = contextSummary
     ? `Current invoice ledger summary: ${contextSummary}\n\nUser message: ${message}`
@@ -81,15 +91,16 @@ export async function parseMessage(env, message, contextSummary) {
   const body = await res.json().catch(() => ({}));
   if (!res.ok) {
     console.error('Gemini error', res.status, JSON.stringify(body).slice(0, 300));
-    return fallbackParse(message);
+    return offlineFallback(message);
   }
   const text = body.candidates?.[0]?.content?.parts?.[0]?.text;
-  if (!text) return fallbackParse(message);
+  if (!text) return offlineFallback(message);
   try {
     const parsed = JSON.parse(text);
-    if (!parsed.action) return fallbackParse(message);
+    if (!parsed.action) return offlineFallback(message);
     return parsed;
   } catch {
-    return fallbackParse(message);
+    return offlineFallback(message);
   }
 }
+
